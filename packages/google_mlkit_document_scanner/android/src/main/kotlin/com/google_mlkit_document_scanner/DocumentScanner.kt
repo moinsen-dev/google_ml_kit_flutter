@@ -142,10 +142,12 @@ class DocumentScanner(
 
                 Activity.RESULT_CANCELED -> {
                     pendingResult?.error(TAG, "Operation cancelled", null)
+                    pendingResult = null
                 }
 
                 else -> {
                     pendingResult?.error(TAG, "Unknown Error", null)
+                    pendingResult = null
                 }
             }
             return true
@@ -175,5 +177,6 @@ class DocumentScanner(
         }
 
         pendingResult?.success(resultMap)
+        pendingResult = null
     }
 }
