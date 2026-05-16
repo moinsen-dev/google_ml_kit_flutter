@@ -17,8 +17,8 @@ Pod::Spec.new do |s|
   s.dependency 'GoogleMLKit/PoseDetection', '~> 9.0.0'
   s.dependency 'GoogleMLKit/PoseDetectionAccurate', '~> 9.0.0'
   s.dependency 'google_mlkit_commons'
-  s.platform = :ios, '15.5'
-  s.ios.deployment_target = '15.5'
+  s.platform = :ios, '17.0'
+  s.ios.deployment_target = '17.0'
   s.static_framework = true
   s.swift_version = '5.0'
 

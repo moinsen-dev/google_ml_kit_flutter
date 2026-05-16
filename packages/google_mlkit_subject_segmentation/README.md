@@ -5,7 +5,7 @@
 [![Star on Github](https://img.shields.io/github/stars/flutter-ml/google_ml_kit_flutter.svg?style=flat&logo=github&colorB=deeppink&label=stars)](https://github.com/flutter-ml/google_ml_kit_flutter)
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 
-> ***NOTE: This feature is still in Beta, and it is only available for Android. Stay tune for updates in [Google's website](https://developers.google.com/ml-kit/vision/subject-segmentation) and request the feature [here](https://github.com/googlesamples/mlkit/issues).***
+> ***NOTE: This feature is still in Beta. On Android it uses Google's ML Kit. On iOS it uses Apple's native Vision framework (`VNGenerateForegroundInstanceMaskRequest`, iOS 17+).***
 
 A Flutter plugin to use [Google's ML Kit Subject Segmentation](https://developers.google.com/ml-kit/vision/subject-segmentation) to easily separate multiple subjects from the background in a picture, enabling use cases such as sticker creation, background swap, or adding cool effects to subjects.
 
@@ -46,7 +46,11 @@ Key capabilities
 
 ### iOS
 
-This feature is still in Beta, and it is only available for Android. Stay tune for updates in [Google's website](https://developers.google.com/ml-kit/vision/subject-segmentation) and request the feature [here](https://github.com/googlesamples/mlkit/issues).
+- Minimum iOS Deployment Target: 17.0
+- Xcode 15.3.0 or newer
+- Swift 5
+
+The iOS implementation uses `VNGenerateForegroundInstanceMaskRequest` from Apple's Vision framework to perform subject segmentation on-device. This provides equivalent functionality to Google's ML Kit Subject Segmentation API on Android.
 
 ### Android
 

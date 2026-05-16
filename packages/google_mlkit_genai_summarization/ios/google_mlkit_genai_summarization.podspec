@@ -14,8 +14,8 @@ Pod::Spec.new do |s|
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*.swift'
   s.dependency 'Flutter'
-  s.platform = :ios, '15.5'
-  s.ios.deployment_target = '15.5'
+  s.platform = :ios, '17.0'
+  s.ios.deployment_target = '17.0'
   s.static_framework = true
   s.swift_version = '5.0'
 

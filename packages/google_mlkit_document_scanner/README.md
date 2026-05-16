@@ -5,7 +5,7 @@
 [![Star on Github](https://img.shields.io/github/stars/flutter-ml/google_ml_kit_flutter.svg?style=flat&logo=github&colorB=deeppink&label=stars)](https://github.com/flutter-ml/google_ml_kit_flutter)
 [![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 
-> **_NOTE: This feature is still in Beta, and it is only available for Android. Stay tune for updates in [Google's website](https://developers.google.com/ml-kit/vision/doc-scanner) and request the feature [here](https://github.com/googlesamples/mlkit/issues)._**
+> **_NOTE: This feature is still in Beta. On Android it uses Google's ML Kit Document Scanner. On iOS it uses Apple's native VisionKit (`VNDocumentCameraViewController`, iOS 13+)._**
 
 A Flutter plugin to use [Google's ML Kit Document Scanner](https://developers.google.com/ml-kit/vision/doc-scanner) to digitize physical documents, which allows users to convert physical documents into digital formats. ML Kit's document scanner API provides a comprehensive solution with a high-quality, consistent UI flow across Android apps and devices. Once the document scanner flow is triggered from your app, users retain full control over the scanning process. They can optionally crop the scanned documents, apply filters, remove shadows or stains, and easily send the digitized files back to your app.
 
@@ -55,7 +55,16 @@ The document scanner API provides a high-quality fully fledged UI flow that is c
 
 ### iOS
 
-This feature is only available for Android. Stay tune for updates in [Google's website](https://developers.google.com/ml-kit/vision/doc-scanner) and request the feature [here](https://github.com/googlesamples/mlkit/issues).
+- Minimum iOS Deployment Target: 17.0
+- Xcode 15.3.0 or newer
+- Swift 5
+
+The iOS implementation uses `VNDocumentCameraViewController` from Apple's VisionKit framework to present a native document scanning UI. This provides equivalent functionality to Google's ML Kit Document Scanner on Android.
+
+**Platform differences:**
+- `pageLimit` is respected by limiting the number of returned pages.
+- `isGalleryImport` is not supported by VisionKit and is ignored on iOS.
+- `mode` is not directly supported by VisionKit; the native scanner always applies edge detection and auto-cropping.
 
 ### Android
 

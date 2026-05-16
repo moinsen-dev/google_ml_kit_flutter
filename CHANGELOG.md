@@ -562,7 +562,7 @@ Packages with changes:
 
 * Update dependencies.
 * Update README.
-* Set `platform :ios, '15.5'` in Podfile.
+* Set `platform :ios, '17.0'` in Podfile.
 
 #### `google_mlkit_barcode_scanning` - `v0.12.0`
 
@@ -573,7 +573,7 @@ Packages with changes:
 
 * Update dependencies.
 * Update README.
-* Set `platform :ios, '15.5'` in Podfile.
+* Set `platform :ios, '17.0'` in Podfile.
 
 #### `google_mlkit_document_scanner` - `v0.2.0`
 
@@ -632,7 +632,7 @@ Packages with changes:
 
 * Update dependencies.
 * Update README.
-* Set `platform :ios, '15.5'` in Podfile.
+* Set `platform :ios, '17.0'` in Podfile.
 
 ## 2024-05-22
 
