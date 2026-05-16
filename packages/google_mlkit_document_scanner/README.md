@@ -55,7 +55,7 @@ The document scanner API provides a high-quality fully fledged UI flow that is c
 
 ### iOS
 
-- Minimum iOS Deployment Target: 17.0
+- Minimum iOS Deployment Target: 26.0
 - Xcode 15.3.0 or newer
 - Swift 5
 

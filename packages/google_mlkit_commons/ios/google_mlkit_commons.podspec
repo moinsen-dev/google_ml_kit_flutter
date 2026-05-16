@@ -15,8 +15,8 @@ Pod::Spec.new do |s|
   s.source_files = 'Classes/**/*.swift'
   s.dependency 'Flutter'
   s.dependency 'MLKitVision', '~> 10.0.0'
-  s.platform = :ios, '17.0'
-  s.ios.deployment_target = '17.0'
+  s.platform = :ios, '26.0'
+  s.ios.deployment_target = '26.0'
   s.static_framework = true
   s.swift_version = '5.0'
 
