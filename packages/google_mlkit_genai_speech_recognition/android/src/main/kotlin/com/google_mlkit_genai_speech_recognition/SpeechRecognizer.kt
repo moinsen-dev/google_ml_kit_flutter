@@ -16,7 +16,7 @@ class SpeechRecognizer(
     private val executor = Executors.newSingleThreadExecutor()
 
     companion object {
-        private const val CHECK_STATUS = "genai#checkStatus"
+        private const val CHECK_FEATURE_STATUS = "genai#checkFeatureStatus"
         private const val START_RECOGNITION = "genai#startRecognition"
         private const val STOP_RECOGNITION = "genai#stopRecognition"
         private const val CLOSE = "genai#closeSpeechRecognizer"
@@ -27,8 +27,8 @@ class SpeechRecognizer(
         result: MethodChannel.Result,
     ) {
         when (call.method) {
-            CHECK_STATUS -> {
-                checkStatus(call, result)
+            CHECK_FEATURE_STATUS -> {
+                checkFeatureStatus(call, result)
             }
 
             START_RECOGNITION -> {
@@ -50,6 +50,22 @@ class SpeechRecognizer(
         }
     }
 
+    private fun reportError(
+        result: MethodChannel.Result,
+        errorCode: String,
+        e: Throwable,
+    ) {
+        val message = e.message ?: e.toString()
+        val details =
+            runCatching {
+                (e as? GenAiException)?.let { ex ->
+                    val code = ex.javaClass.getMethod("getErrorCode").invoke(ex) as? Int
+                    code?.let { mapOf<String, Any>("errorCode" to it, "errorMessage" to message) }
+                }
+            }.getOrNull()
+        result.error(errorCode, message, details)
+    }
+
     private fun initialize(call: MethodCall): Any =
         runCatching {
             val optionsBuilder =
@@ -64,7 +80,7 @@ class SpeechRecognizer(
                 .invoke(null, options)!!
         }.getOrDefault(Any())
 
-    private fun checkStatus(
+    private fun checkFeatureStatus(
         call: MethodCall,
         result: MethodChannel.Result,
     ) {
@@ -94,13 +110,13 @@ class SpeechRecognizer(
                     }
 
                     override fun onFailure(e: Throwable) {
-                        result.error("SpeechRecognizerError", e.toString(), null)
+                        reportError(result, "SpeechRecognizerError", e)
                     }
                 },
                 executor,
             )
         }.onFailure { e ->
-            result.error("SpeechRecognizerError", "Failed to check status: $e", null)
+            reportError(result, "SpeechRecognizerError", e)
         }
     }
 

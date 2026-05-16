@@ -1,3 +1,8 @@
+## 0.11.2
+
+* Migrate Android implementation from Java to Kotlin.
+* Update Java compatibility to version 11 (fixes source/target 8 deprecation warnings).
+
 ## 0.11.1
 
 * Update Android native library `com.google.mlkit:vision-common` to 17.3.0

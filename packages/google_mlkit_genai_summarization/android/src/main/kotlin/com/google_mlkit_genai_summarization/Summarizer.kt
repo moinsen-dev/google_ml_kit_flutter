@@ -60,6 +60,22 @@ class Summarizer(
         }
     }
 
+    private fun reportError(
+        result: MethodChannel.Result,
+        errorCode: String,
+        e: Throwable,
+    ) {
+        val message = e.message ?: e.toString()
+        val details =
+            runCatching {
+                (e as? GenAiException)?.let { ex ->
+                    val code = ex.javaClass.getMethod("getErrorCode").invoke(ex) as? Int
+                    code?.let { mapOf<String, Any>("errorCode" to it, "errorMessage" to message) }
+                }
+            }.getOrNull()
+        result.error(errorCode, message, details)
+    }
+
     private fun initialize(): com.google.mlkit.genai.summarization.Summarizer {
         val options = SummarizerOptions.builder(context).build()
         return Summarization.getClient(options)
@@ -89,7 +105,7 @@ class Summarizer(
                 }
 
                 override fun onFailure(e: Throwable) {
-                    result.error("SummarizerError", e.toString(), null)
+                    reportError(result, "SummarizerError", e)
                 }
             },
             executor,
@@ -108,7 +124,7 @@ class Summarizer(
                 override fun onDownloadStarted(bytesToDownload: Long) {}
 
                 override fun onDownloadFailed(e: GenAiException) {
-                    result.error("DownloadError", e.toString(), null)
+                    reportError(result, "DownloadError", e)
                 }
 
                 override fun onDownloadProgress(totalBytesDownloaded: Long) {}
@@ -139,7 +155,7 @@ class Summarizer(
                 }
 
                 override fun onFailure(e: Throwable) {
-                    result.error("InferenceError", e.toString(), null)
+                    reportError(result, "InferenceError", e)
                 }
             },
             executor,
@@ -148,6 +164,6 @@ class Summarizer(
 
     private fun closeSummarizer(call: MethodCall) {
         val id = call.argument<String>("id") ?: return
-        instances.remove(id)?.close()
+        runCatching { instances.remove(id)?.close() }
     }
 }

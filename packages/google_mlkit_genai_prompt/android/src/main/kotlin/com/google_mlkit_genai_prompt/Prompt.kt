@@ -59,6 +59,22 @@ class Prompt(
         }
     }
 
+    private fun reportError(
+        result: MethodChannel.Result,
+        errorCode: String,
+        e: Throwable,
+    ) {
+        val message = e.message ?: e.toString()
+        val details =
+            runCatching {
+                (e as? GenAiException)?.let { ex ->
+                    val code = ex.javaClass.getMethod("getErrorCode").invoke(ex) as? Int
+                    code?.let { mapOf<String, Any>("errorCode" to it, "errorMessage" to message) }
+                }
+            }.getOrNull()
+        result.error(errorCode, message, details)
+    }
+
     private fun initialize(call: MethodCall): Any =
         try {
             val generationInstance =
@@ -109,7 +125,7 @@ class Prompt(
                     }
 
                     override fun onFailure(e: Throwable) {
-                        result.error("PromptError", e.toString(), null)
+                        reportError(result, "PromptError", e)
                     }
                 },
                 executor,
@@ -135,7 +151,7 @@ class Prompt(
                         override fun onDownloadStarted(p0: Long) {}
 
                         override fun onDownloadFailed(e: GenAiException) {
-                            result.error("DownloadError", e.toString(), null)
+                            reportError(result, "DownloadError", e)
                         }
 
                         override fun onDownloadProgress(totalBytesDownloaded: Long) {}
@@ -159,6 +175,9 @@ class Prompt(
 
     private fun closePrompt(call: MethodCall) {
         val id = call.argument<String>("id") ?: return
-        instances.remove(id)
+        val instance = instances.remove(id) ?: return
+        runCatching {
+            instance.javaClass.getMethod("close").invoke(instance)
+        }
     }
 }

@@ -77,6 +77,22 @@ class ImageDescriber(
         return id to describer
     }
 
+    private fun reportError(
+        result: MethodChannel.Result,
+        errorCode: String,
+        e: Throwable,
+    ) {
+        val message = e.message ?: e.toString()
+        val details =
+            runCatching {
+                (e as? GenAiException)?.let { ex ->
+                    val code = ex.javaClass.getMethod("getErrorCode").invoke(ex) as? Int
+                    code?.let { mapOf<String, Any>("errorCode" to it, "errorMessage" to message) }
+                }
+            }.getOrNull()
+        result.error(errorCode, message, details)
+    }
+
     private fun checkFeatureStatus(
         call: MethodCall,
         result: MethodChannel.Result,
@@ -99,7 +115,7 @@ class ImageDescriber(
                 }
 
                 override fun onFailure(e: Throwable) {
-                    result.error("ImageDescriberError", e.toString(), null)
+                    reportError(result, "ImageDescriberError", e)
                 }
             },
             executor,
@@ -117,7 +133,7 @@ class ImageDescriber(
                 override fun onDownloadStarted(bytesToDownload: Long) {}
 
                 override fun onDownloadFailed(e: GenAiException) {
-                    result.error("DownloadError", e.toString(), null)
+                    reportError(result, "DownloadError", e)
                 }
 
                 override fun onDownloadProgress(totalBytesDownloaded: Long) {}
@@ -232,7 +248,7 @@ class ImageDescriber(
                 }
 
                 override fun onFailure(e: Throwable) {
-                    result.error("InferenceError", e.toString(), null)
+                    reportError(result, "InferenceError", e)
                 }
             },
             executor,
@@ -241,7 +257,7 @@ class ImageDescriber(
 
     private fun closeImageDescriber(call: MethodCall) {
         val id = call.argument<String>("id") ?: return
-        instances[id]?.close()
+        runCatching { instances[id]?.close() }
         instances.remove(id)
     }
 }

@@ -60,6 +60,22 @@ class Proofreader(
         }
     }
 
+    private fun reportError(
+        result: MethodChannel.Result,
+        errorCode: String,
+        e: Throwable,
+    ) {
+        val message = e.message ?: e.toString()
+        val details =
+            runCatching {
+                (e as? GenAiException)?.let { ex ->
+                    val code = ex.javaClass.getMethod("getErrorCode").invoke(ex) as? Int
+                    code?.let { mapOf<String, Any>("errorCode" to it, "errorMessage" to message) }
+                }
+            }.getOrNull()
+        result.error(errorCode, message, details)
+    }
+
     private fun initialize(call: MethodCall): com.google.mlkit.genai.proofreading.Proofreader {
         val options = ProofreaderOptions.builder(context).build()
         return Proofreading.getClient(options)
@@ -89,7 +105,7 @@ class Proofreader(
                 }
 
                 override fun onFailure(e: Throwable) {
-                    result.error("ProofreaderError", e.toString(), null)
+                    reportError(result, "ProofreaderError", e)
                 }
             },
             executor,
@@ -108,7 +124,7 @@ class Proofreader(
                 override fun onDownloadStarted(bytesToDownload: Long) {}
 
                 override fun onDownloadFailed(e: GenAiException) {
-                    result.error("DownloadError", e.toString(), null)
+                    reportError(result, "DownloadError", e)
                 }
 
                 override fun onDownloadProgress(totalBytesDownloaded: Long) {}
@@ -146,7 +162,7 @@ class Proofreader(
                 }
 
                 override fun onFailure(e: Throwable) {
-                    result.error("InferenceError", e.toString(), null)
+                    reportError(result, "InferenceError", e)
                 }
             },
             executor,
@@ -155,6 +171,6 @@ class Proofreader(
 
     private fun closeProofreader(call: MethodCall) {
         val id = call.argument<String>("id") ?: return
-        instances.remove(id)?.close()
+        runCatching { instances.remove(id)?.close() }
     }
 }

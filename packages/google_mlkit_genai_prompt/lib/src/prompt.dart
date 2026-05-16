@@ -23,28 +23,37 @@ class Prompt {
     'google_mlkit_genai_prompt',
   );
 
+  static const Duration _timeout = Duration(seconds: 10);
+
   /// Instance id.
   final String id = DateTime.now().microsecondsSinceEpoch.toString();
 
   /// Constructor to create an instance of [Prompt].
   Prompt();
 
+  Future<T> _invokeMethod<T>(String method, Map<String, dynamic> args) async {
+    try {
+      final result = await _channel.invokeMethod(method, args).timeout(_timeout);
+      return result as T;
+    } on PlatformException catch (e) {
+      final details = e.details is Map ? e.details as Map : null;
+      final errorCode = details?['errorCode'] as int?;
+      final message =
+          details?['errorMessage'] as String? ?? e.message ?? 'Unknown error';
+      throw GenAiException(errorCode ?? -1, message);
+    }
+  }
+
   /// Checks the feature status.
   Future<FeatureStatus> checkFeatureStatus() async {
-    final result = await _channel.invokeMethod('genai#checkFeatureStatus', {
-      'id': id,
-    });
+    final result =
+        await _invokeMethod<int>('genai#checkFeatureStatus', {'id': id});
     return FeatureStatus.values[result];
   }
 
   /// Downloads the feature if needed.
-  Future<void> downloadFeature({
-    void Function(int bytesToDownload)? onDownloadStarted,
-    void Function(GenAiException exception)? onDownloadFailed,
-    void Function(int totalBytesDownloaded)? onDownloadProgress,
-    void Function()? onDownloadCompleted,
-  }) async {
-    await _channel.invokeMethod('genai#downloadFeature', {'id': id});
+  Future<void> downloadFeature() async {
+    await _invokeMethod<void>('genai#downloadFeature', {'id': id});
   }
 
   /// Runs inference with streaming response.
@@ -56,6 +65,7 @@ class Prompt {
           'text': text,
           if (imageData != null) 'imageData': imageData,
         })
+        .timeout(_timeout)
         .then((_) {
           // In a real implementation, this would use an event channel
           // to stream the results incrementally.
@@ -68,17 +78,16 @@ class Prompt {
 
   /// Runs inference with non-streaming response.
   Future<String> runInference(String text, {dynamic imageData}) async {
-    final result = await _channel.invokeMethod('genai#runInference', {
-      'id': id,
-      'text': text,
-      if (imageData != null) 'imageData': imageData,
-    });
+    final result = await _invokeMethod<Map<dynamic, dynamic>>(
+      'genai#runInference',
+      {'id': id, 'text': text, if (imageData != null) 'imageData': imageData},
+    );
     return result['text'] as String;
   }
 
   /// Closes the prompt generator and releases its resources.
   Future<void> close() =>
-      _channel.invokeMethod('genai#closePrompt', {'id': id});
+      _invokeMethod<void>('genai#closePrompt', {'id': id});
 }
 
 /// Exception thrown by GenAI APIs.

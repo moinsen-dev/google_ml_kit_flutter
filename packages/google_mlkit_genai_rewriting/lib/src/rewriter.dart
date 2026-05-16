@@ -47,6 +47,8 @@ class Rewriter {
     'google_mlkit_genai_rewriting',
   );
 
+  static const Duration _timeout = Duration(seconds: 10);
+
   /// Instance id.
   final String id = DateTime.now().microsecondsSinceEpoch.toString();
 
@@ -59,9 +61,23 @@ class Rewriter {
   /// Constructor to create an instance of [Rewriter].
   Rewriter({required this.outputType, required this.language});
 
+  Future<T> _invokeMethod<T>(String method, Map<String, dynamic> args) async {
+    try {
+      final result = await _channel.invokeMethod(method, args).timeout(_timeout);
+      return result as T;
+    } on PlatformException catch (e) {
+      final details = e.details is Map ? e.details as Map : null;
+      final errorCode = details?['errorCode'] as int?;
+      final message =
+          details?['errorMessage'] as String? ?? e.message ?? 'Unknown error';
+      throw GenAiException(errorCode ?? -1, message);
+    }
+  }
+
   /// Checks the feature status.
   Future<FeatureStatus> checkFeatureStatus() async {
-    final result = await _channel.invokeMethod('genai#checkFeatureStatus', {
+    final result =
+        await _invokeMethod<int>('genai#checkFeatureStatus', {
       'id': id,
       'outputType': outputType.index,
       'language': language.index,
@@ -70,13 +86,8 @@ class Rewriter {
   }
 
   /// Downloads the feature if needed.
-  Future<void> downloadFeature({
-    void Function(int bytesToDownload)? onDownloadStarted,
-    void Function(GenAiException exception)? onDownloadFailed,
-    void Function(int totalBytesDownloaded)? onDownloadProgress,
-    void Function()? onDownloadCompleted,
-  }) async {
-    await _channel.invokeMethod('genai#downloadFeature', {
+  Future<void> downloadFeature() async {
+    await _invokeMethod<void>('genai#downloadFeature', {
       'id': id,
       'outputType': outputType.index,
       'language': language.index,
@@ -88,6 +99,7 @@ class Rewriter {
     final controller = StreamController<String>();
     _channel
         .invokeMethod('genai#runInferenceStreaming', {'id': id, 'text': text})
+        .timeout(_timeout)
         .then((_) {
           // In a real implementation, this would use an event channel
           // to stream the results incrementally.
@@ -100,16 +112,16 @@ class Rewriter {
 
   /// Runs inference with non-streaming response.
   Future<String> runInference(String text) async {
-    final result = await _channel.invokeMethod('genai#runInference', {
-      'id': id,
-      'text': text,
-    });
+    final result = await _invokeMethod<Map<dynamic, dynamic>>(
+      'genai#runInference',
+      {'id': id, 'text': text},
+    );
     return result['text'] as String;
   }
 
   /// Closes the rewriter and releases its resources.
   Future<void> close() =>
-      _channel.invokeMethod('genai#closeRewriter', {'id': id});
+      _invokeMethod<void>('genai#closeRewriter', {'id': id});
 }
 
 /// Exception thrown by GenAI APIs.
